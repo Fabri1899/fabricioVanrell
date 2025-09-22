@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Ábrelo cuando...</title>
+<style>
+  :root {
+  --bg1: #fdf2f8;
+  --bg2: #fef9c3;
+  --card: #ffffff;
+  --accent: #ec4899;
+  --muted: #6b7280;
+  --glass: rgba(255, 255, 255, 0.6);
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+  background: linear-gradient(135deg, var(--bg1), var(--bg2));
+  color: #222;
+}
+
+.wrap {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 1.7rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  background: var(--card);
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: 0 8px 20px rgba(20, 20, 30, 0.08);
+  cursor: pointer;
+  transition: transform .15s ease, box-shadow .15s ease;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.card h3 {
+  margin: 0 0 8px 0;
+  font-size: 1.05rem;
+  color: #111;
+}
+
+.card p {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--muted);
+  line-height: 1.25;
+}
+
+.card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px rgba(20, 20, 30, 0.15);
+}
+
+.card:active {
+  transform: translateY(1px);
+}
+
+/* Modal */
+.modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1200;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.modal.open {
+  display: flex;
+}
+
+.modal-body {
+  background: #fff;
+  width: 100%;
+  max-width: 780px;
+  border-radius: 14px;
+  padding: 24px;
+  max-height: 86vh;
+  overflow: auto;
+  box-shadow: 0 20px 50px rgba(10, 10, 20, 0.25);
+  position: relative;
+  animation: fadeInUp .25s ease;
+}
+
+.close-btn {
+  position: absolute;
+  right: 14px;
+  top: 12px;
+  border: 0;
+  background: transparent;
+  font-size: 26px;
+  cursor: pointer;
+  color: var(--muted);
+  transition: color .15s;
+}
+
+.close-btn:hover {
+  color: var(--accent);
+}
+
+h2 {
+  margin: 6px 0 14px 0;
+  font-size: 1.35rem;
+  color: var(--accent);
+}
+
+.content p {
+  margin: 12px 0;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  font-size: 0.95rem;
+}
+
+/* Footer */
+footer {
+  margin-top: 22px;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+/* Sopa */
+.sopa-controls {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin: 14px 0;
+}
+
+.sopa-controls input[type="text"] {
+  flex: 1;
+  min-width: 150px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  font-size: 0.9rem;
+}
+
+.sopa-controls label {
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+
+.btn {
+  background: var(--accent);
+  color: #fff;
+  padding: 9px 14px;
+  border-radius: 8px;
+  border: 0;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background .15s;
+}
+
+.btn:hover {
+  background: #db2777;
+}
+
+.grid {
+  display: grid;
+  gap: 5px;
+  margin-top: 12px;
+  justify-content: center;
+}
+
+.cell {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  border: 1px solid rgba(0,0,0,0.06);
+  font-weight: 600;
+  user-select: none;
+  background: var(--glass);
+  font-size: 0.9rem;
+}
+
+  /* Estados de selección y encontrado */
+  .cell.active {
+    background: #fde68a;
+    border-color: #f59e0b;
+  }
+  .cell.found {
+    background: #bbf7d0;
+    border-color: #22c55e;
+    color: #065f46;
+  }
+
+.word-list {
+  margin-top: 12px;
+  font-size: 0.95rem;
+  color: #333;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .cell { width: 26px; height: 26px; font-size: 0.8rem; }
+  header h1 { font-size: 1.25rem; }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Ábrelo cuando...</h1>
+      <div style="font-size:0.9rem;color:var(--muted)">9 cartas. Elije según tu ánimo.</div>
+    </header>
+
+    <main class="cards" id="cards">
+      <div class="card" data-key="feliz"><h3>¿Estás feliz?</h3><p>Un mensaje para celebrar</p></div>
+      <div class="card" data-key="dificil"><h3>¿Estás pasando por un momento difícil?</h3><p>Soporte y palabras de aliento</p></div>
+      <div class="card" data-key="aburrida"><h3>¿Estás aburrida?</h3><p>Sopa de letras para distraerte</p></div>
+      <div class="card" data-key="fisico"><h3>¿Te sientes mal por tu físico?</h3><p>Autoestima y ánimo</p></div>
+      <div class="card" data-key="triste"><h3>¿Estás triste?</h3><p>Apoyo y compañía</p></div>
+      <div class="card" data-key="extranas"><h3>¿Me extrañas?</h3><p>Mensaje para la distancia</p></div>
+      <div class="card" data-key="rara"><h3>¿Te sentís rara?</h3><p>Validación y escucha</p></div>
+      <div class="card" data-key="maldia"><h3>¿Tuviste un mal día?</h3><p>Reconfortar y animar</p></div>
+      <div class="card" data-key="insomnio"><h3>¿No puedes dormir?</h3><p>Consejos para relajarte</p></div>
+    </main>
+
+    <footer>Podés cerrar las cartas con el botón X o tocando fuera del recuadro.</footer>
+  </div>
+
+  <!-- Modal -->
+  <div id="modal" class="modal" aria-hidden="true">
+    <div class="modal-body" role="dialog" aria-modal="true">
+      <button class="close-btn" id="closeBtn" aria-label="Cerrar">&times;</button>
+      <div id="modal-content" class="content"></div>
+    </div>
+  </div>
+
+<script>
+/* Contenidos (HTML seguro en template literals, con párrafos) */
+const contenidos = {
+  feliz: `
+    <h2>¿Estás feliz?</h2>
+    <div>
+      <p>Hola amooorrr.</p>
+      <p>Si llegas a leer esta carta espero ser uno de los motivos por el cual estés feliz y te hayas animado a leerla, y si no lo soy, también me alegro mucho que estés feliz y te hayas acordado de esta carta. Al final de cuentas tu felicidad es mi felicidad &lt;3.</p>
+      <p>Me da mucho gusto saber que estás feliz, sea por una buena noticia, algún logro, o simplemente porque te sentís bien. Sea la razón que sea me da mucha felicidad. Me gusta verte y que seas muy feliz. Te lo mereces mi vida, daría todo para que todos tus días sean así de felices. Si pudiera, créeme que haría que todos tus días fueran así.</p>
+      <p>Disfruta mucho esos días felices y en los que te sentás bien con lo que tenés. Si los querés compartir conmigo seré también el más feliz del mundo por verte bien y por cada cosa buena que te pase.</p>
+      <p>Sos un amor de persona sin importar las cosas o cómo estás. Te adoro y merecés mucha felicidad.</p>
+      <p>Estoy tan feliz por vos. No dejes que nada te arruine este día en el que te sentís bien. TEAMOO MUCHOOO.</p>
+      <p>Tu sonrisa es todo lo que está bien. Haría lo que fuese con tal de que la mantengas todos los días &lt;3.</p>
+      <p>AMO VERTE FELIZ, TE AMOOO.</p>
+    </div>
+  `,
+  dificil: `
+    <h2>¿Estás pasando por un momento difícil?</h2>
+    <div>
+      <p>Me gustaría mucho poder estar ahí contigo en estos momentos. Puede ser que en este momento no sepa qué te pasa o quizás no pueda ayudarte mucho. En realidad no sé, pero sí sé que en vos hay una persona fuerte, capaz de resolver cualquier problema o de resistir cualquier momento malo.</p>
+      <p>Todos pasamos por momentos difíciles. No pretendo minimizar tu problema. Solo quiero recordarte que tenés muchas personas a tu alrededor que van a empatizar y que no van a tener problema en ayudarte a salir adelante.</p>
+      <p>Sé que siempre voy a estar para vos. Te voy a apoyar en lo que necesites. Siempre estaré para darte un abrazo, para escucharte, para aconsejarte o simplemente para hacerte compañía.</p>
+      <p>TE AMO MUCHO, MI VIDA ENTERA.</p>
+    </div>
+  `,
+  aburrida: `
+    <h2>¿Estás aburrida?</h2>
+    <div>
+      <p>Si abriste esta carta es porque estás aburrida o sos muy curiosa.</p>
+      <p>Lamento mucho no poder estar ahí para hablar, molestarte, pelearte, morderte o lo que venga. Haciéndote mimos, cosquillas, besándote, abrazándote y diciendo lo mucho que te amo.</p>
+      <p>Busca alrededor tuyo o recuerda todas las cosas que en algún momento te han sacado una sonrisa. Estoy seguro de que hay muchísimas porque sos re divertida y sé que te gusta hacer sonreír a las personas. Así que mejor saca esa crítica de "me muero de flojera" y sonreí.</p>
+      <p>Te dejo una sopa de letras para que te diviertas y te distraigas un ratito.</p>
+
+      <div class="sopa-controls">
+        <div id="sopaInstructions" style="font-size:0.9rem;color:#555;margin:6px 0 2px 0;width:100%">
+          <strong>Instrucciones:</strong> Arrastrá desde la primera hasta la última letra para seleccionar una palabra. Podés seleccionar en horizontal, vertical o diagonal, en ambos sentidos. En celular, tocá una letra y deslizá hasta la última. Tocá "Generar" para crear una nueva sopa de letras, que te diviertas!!.
+        </div>
+        <label for="wordInput">Palabras (separadas por coma):</label>
+        <input id="wordInput" type="text" value="AMOR,SONRISA,NACIONAL,HERMOSA,ABRAZO,BESO,FELICIDAD,CARIÑO,RISAS,MIMO" placeholder="ej: AMOR,SONRISA,BESO" />
+        <label for="sizeInput">Tamaño:</label>
+        <input id="sizeInput" type="text" value="10" style="width:56px" />
+        <button id="genBtn" class="btn">Generar</button>
+      </div>
+
+      <div id="sopaArea">
+        <div id="gridContainer" style="display:flex;flex-direction:column;align-items:center"></div>
+        <div id="wordList" class="word-list"></div>
+      </div>
+    </div>
+  `,
+  fisico: `
+    <h2>¿Te sentís mal por tu físico?</h2>
+    <div>
+      <p>Eres muy linda tal y como estás. Para mí sos perfecta. La persona a la que debe agradarle es a vos misma, no a los demás.</p>
+      <p>Tratá de cuidarte si querés mejorar algo. Por ejemplo: comé bien, tomá agua, hacé ejercicio, cuidate. Y sobre todo, bañate todos los días. Desde acá se huele, JAJAJA.</p>
+      <p>Realmente me encanta cómo estás. Estás del 1 al 5 en el TOP 5 amorcito. A mí no me importa el físico, pero si querés cambiarlo, hacelo. Yo te voy a estar alentando y acompañando en ese camino.</p>
+    </div>
+  `,
+  triste: `
+    <h2>¿Estás triste?</h2>
+    <div>
+      <p>Me pone mal que estés triste. No es bueno pero es algo normal por lo que todos pasamos. Puede ser por un problema familiar, personal, etc. Siempre existe un momento en nuestras vidas en el que nos sentimos perdidos. Ese momento no es más que un reencuentro con nosotros mismos. Lo bueno de los momentos tristes es que descubrís quiénes son realmente tus amig@s.</p>
+      <p>Quiero que me tengas confianza y me digas todo lo que te pasa para intentar ayudarte. Tal vez no sea suficiente, pero puedo hacer muchas cosas para que estés mejor.</p>
+      <p>Es un momento difícil. Quiero que sepas que siempre voy a estar contigo y haré todo lo que esté en mis manos para ayudarte porque te quiero mucho.</p>
+      <p>TE AMO MUCHO, MI ENANITAA HERMOSAA.</p>
+    </div>
+  `,
+  extranas: `
+    <h2>¿Me extrañas?</h2>
+    <div>
+      <p>Hola mi loquita hermosa!</p>
+      <p>¿Por qué me extrañás? ¿Dónde estás? ¿Dónde estoy yo? ¿Por qué no estamos acostados abrazándonos en estos momentos?</p>
+      <p>Sé que hablar por mensaje o llamada no se compara con los momentos que estamos juntos. Pero es una manera de sentirnos cerca. Tal vez no sea el motivo por el que me extrañás, pero te prometo que pronto nos volveremos a ver y la vamos a pasar muy bonito.</p>
+      <p>Tengo muchísimas ganas de poder estar juntos para abrazarte, hacerte mimos, besarte y mirarte. Contigo siento que ya gané. Quiero estar en tus brazos.</p>
+    </div>
+  `,
+  rara: `
+    <h2>¿Te sentís rara?</h2>
+    <div>
+      <p>A veces uno no sabe lo que siente. Dudas existenciales y demás. Pero es completamente normal.</p>
+      <p>Puede ser por algo que te hicieron, por cómo actuaron otros o porque no todo salió como esperabas.</p>
+      <p>Si te sentís rara por cualquier cosa podés escribirme. Si pudiera estaría ahí abrazándote, escuchándote y dándote cariño &lt;3&lt;3&lt;3.</p>
+    </div>
+  `,
+  maldia: `
+    <h2>¿Tuviste un mal día?</h2>
+    <div>
+      <p>Hola amor. ¿Qué pasó?</p>
+      <p>Tranquila. Sólo fue un mal día. Tal vez te levantaste con el pie izquierdo, pero no significa que todo seguirá mal. No sé qué pasó pero estoy acá para escucharte, aconsejarte y quedarme junto a vos.</p>
+      <p>No te estreses ni te agobies. No le des vueltas en la cabeza. Distraete y ten confianza de que todo estará bien. Sea lo que sea, va a pasar y yo voy a estar aquí contigo. Mañana puede ser el mejor día de tu vida.</p>
+      <p>No dejes que un mal día borre esa sonrisa hermosa que tenés &lt;3.</p>
+    </div>
+  `,
+  insomnio: `
+    <h2>¿No podés dormir?</h2>
+    <div>
+      <p>Hola amorcito. ¿Qué pasa? ¿Por qué no estás dormida?</p>
+      <p>Sabés que podés hablar conmigo porque siempre estoy. Si por alguna razón no estoy porque me dormí o estoy ocupado, lee esto.</p>
+      <p>Si tenés insomnio intentá pensar en cosas bonitas, escuchá música, mirá algún video o serie que te guste. Si tuviste una pesadilla, fue sólo un mal sueño. Si tu día fue malo, no te estreses. Mañana será un día mejor.</p>
+      <p>Hacé lo que te dije y descansá un poco. Las personas hermosas necesitan dormir mucho.</p>
+      <p>Te amo mucho, mi vida.</p>
+    </div>
+  `
+};
+
+/* Modal control */
+const modal = document.getElementById('modal');
+const modalContent = document.getElementById('modal-content');
+const closeBtn = document.getElementById('closeBtn');
+
+document.getElementById('cards').addEventListener('click', e => {
+  const card = e.target.closest('.card');
+  if(!card) return;
+  const key = card.dataset.key;
+  openModal(key);
+});
+
+closeBtn.addEventListener('click', closeModal);
+modal.addEventListener('click', (e)=>{
+  if(e.target === modal) closeModal();
+});
+function openModal(key){
+  modalContent.scrollTop = 0;
+  modalContent.querySelector('#modal-content')?.remove();
+  document.getElementById('modal-content').innerHTML = contenidos[key] || '<p>Sin contenido</p>';
+  modal.classList.add('open');
+  modal.setAttribute('aria-hidden','false');
+  if(key === 'aburrida') initSopa();
+}
+function closeModal(){
+  modal.classList.remove('open');
+  modal.setAttribute('aria-hidden','true');
+}
+
+/* Sopa de letras: algoritmo simple con orientación horizontal / vertical / diagonal.
+   Evita sobrescribir con letras distintas. Rellena con letras aleatorias. */
+function initSopa(){
+  const genBtn = document.getElementById('genBtn');
+  const wordInput = document.getElementById('wordInput');
+  const sizeInput = document.getElementById('sizeInput');
+  const gridContainer = document.getElementById('gridContainer');
+  const wordList = document.getElementById('wordList');
+
+  function parseWords(text){
+    return text.split(',').map(w => w.trim().toUpperCase()).filter(Boolean).slice(0,25);
+  }
+
+  function randomLetter(){
+    const letters = "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ";
+    return letters[Math.floor(Math.random()*letters.length)];
+  }
+
+  function createEmptyGrid(n){
+    return Array.from({length:n},()=>Array.from({length:n},()=>''));
+  }
+
+  function canPlace(grid, word, r, c, dr, dc){
+    const n = grid.length;
+    for(let k=0;k<word.length;k++){
+      const rr = r + dr*k;
+      const cc = c + dc*k;
+      if(rr<0||rr>=n||cc<0||cc>=n) return false;
+      if(grid[rr][cc] && grid[rr][cc] !== word[k]) return false;
+    }
+    return true;
+  }
+
+  function placeWord(grid, word){
+    const n = grid.length;
+    const tries = 200;
+    const dirs = [[0,1],[1,0],[1,1],[0,-1],[-1,0],[-1,-1],[1,-1],[-1,1]];
+    for(let t=0;t<tries;t++){
+      const drdc = dirs[Math.floor(Math.random()*dirs.length)];
+      const dr = drdc[0], dc = drdc[1];
+      const r = Math.floor(Math.random()*n);
+      const c = Math.floor(Math.random()*n);
+      if(canPlace(grid,word,r,c,dr,dc)){
+        const positions = [];
+        for(let k=0;k<word.length;k++){
+          const rr = r+dr*k, cc = c+dc*k;
+          grid[rr][cc] = word[k];
+          positions.push([rr,cc]);
+        }
+        return positions; // devuelve posiciones colocadas
+      }
+    }
+    return false;
+  }
+
+  function fillGrid(grid){
+    const n = grid.length;
+    for(let i=0;i<n;i++){
+      for(let j=0;j<n;j++){
+        if(!grid[i][j]) grid[i][j]=randomLetter();
+      }
+    }
+  }
+
+  function renderGrid(grid){
+    gridContainer.innerHTML = '';
+    const n = grid.length;
+    const gridEl = document.createElement('div');
+    gridEl.className = 'grid';
+    gridEl.style.gridTemplateColumns = `repeat(${n}, auto)`;
+    gridEl.style.display = 'grid';
+    gridEl.style.gap = '6px';
+    gridEl.style.justifyContent = 'center';
+    gridEl.style.alignItems = 'center';
+    gridEl.style.padding = '6px';
+    for(let i=0;i<n;i++){
+      for(let j=0;j<n;j++){
+        const c = document.createElement('div');
+        c.className='cell';
+        c.dataset.row = String(i);
+        c.dataset.col = String(j);
+        c.textContent = grid[i][j];
+        gridEl.appendChild(c);
+      }
+    }
+    gridContainer.appendChild(gridEl);
+    return gridEl;
+  }
+
+  function generate(){
+    const raw = wordInput.value || '';
+    let words = parseWords(raw);
+    if(words.length === 0) words = ['AMOR','SONRISA','NACIONAL','HERMOSA','ABRAZO','BESO','FELICIDAD','CARIÑO','RISAS','MIMO'];
+    let size = parseInt(sizeInput.value) || 10;
+    size = Math.max(6, Math.min(20, size));
+    // truncate words that don't fit
+    words = words.map(w => w.replace(/[^A-ZÑ]/g,'')).filter(Boolean).map(w => w.slice(0, size));
+    const grid = createEmptyGrid(size);
+    // try placing longer words first
+    words.sort((a,b)=>b.length-a.length);
+    const placed = [];
+    const placedMeta = [];
+    words.forEach(w=>{
+      const res = placeWord(grid,w);
+      if(res){
+        placed.push(w);
+        placedMeta.push({ word: w, positions: res });
+      }
+    });
+    fillGrid(grid);
+    const gridEl = renderGrid(grid);
+    // Render lista de palabras interactiva
+    wordList.innerHTML = '<strong>Palabras:</strong>';
+    const ul = document.createElement('ul');
+    ul.style.margin = '8px 0 0 0';
+    ul.style.paddingLeft = '18px';
+    placed.forEach(w=>{
+      const li = document.createElement('li');
+      li.textContent = w;
+      li.dataset.word = w;
+      ul.appendChild(li);
+    });
+    wordList.appendChild(ul);
+    bindSelection(gridEl, grid, placedMeta);
+    if(placed.length < words.length){
+      wordList.innerHTML += '<div style="color:#a00;margin-top:6px;font-size:0.9rem">No entraron todas las palabras. Probá aumentar el tamaño.</div>';
+    }
+  }
+
+  // Lógica de selección (mouse + touch)
+  function bindSelection(gridEl, grid, placedMeta){
+    let isDragging = false;
+    let startCell = null;
+    let currentCells = [];
+    const foundSet = new Set();
+
+    function getCellFromEvent(evt){
+      if(evt.touches && evt.touches.length){
+        const t = evt.touches[0];
+        const el = document.elementFromPoint(t.clientX, t.clientY);
+        return el && el.classList && el.classList.contains('cell') ? el : null;
+      }
+      const target = evt.target;
+      return target && target.classList && target.classList.contains('cell') ? target : null;
+    }
+
+    function normalizeStep(delta){
+      if(delta === 0) return 0;
+      return delta > 0 ? 1 : -1;
+    }
+
+    function computeLineCells(r0,c0,r1,c1){
+      const drRaw = r1 - r0;
+      const dcRaw = c1 - c0;
+      const stepR = normalizeStep(drRaw);
+      const stepC = normalizeStep(dcRaw);
+      // Validar 8 direcciones: si alguno cambia y el otro no es proporcional, no es línea recta válida
+      if(!(stepR === 0 || stepC === 0 || Math.abs(drRaw) === Math.abs(dcRaw))){
+        return [];
+      }
+      const len = Math.max(Math.abs(drRaw), Math.abs(dcRaw)) + 1;
+      const cells = [];
+      for(let k=0;k<len;k++){
+        cells.push([r0 + stepR*k, c0 + stepC*k]);
+      }
+      return cells;
+    }
+
+    function clearPreview(){
+      currentCells.forEach(([r,c])=>{
+        const el = queryCell(r,c);
+        if(el) el.classList.remove('active');
+      });
+      currentCells = [];
+    }
+
+    function queryCell(r,c){
+      return gridEl.querySelector(`.cell[data-row="${r}"][data-col="${c}"]`);
+    }
+
+    function setPreview(cells){
+      clearPreview();
+      currentCells = cells;
+      cells.forEach(([r,c])=>{
+        const el = queryCell(r,c);
+        if(el && !el.classList.contains('found')) el.classList.add('active');
+      });
+    }
+
+    function markFound(word, cells){
+      cells.forEach(([r,c])=>{
+        const el = queryCell(r,c);
+        if(el){
+          el.classList.remove('active');
+          el.classList.add('found');
+        }
+      });
+      const li = wordList.querySelector(`li[data-word="${word}"]`);
+      if(li) li.style.textDecoration = 'line-through';
+      foundSet.add(word);
+      // mensaje simple al completar
+      if(foundSet.size === placedMeta.length){
+        const done = document.createElement('div');
+        done.textContent = '¡Completado!';
+        done.style.marginTop = '8px';
+        done.style.color = '#16a34a';
+        wordList.appendChild(done);
+      }
+    }
+
+    function trySubmitSelection(){
+      if(currentCells.length === 0) return;
+      const chars = currentCells.map(([r,c])=>grid[r][c]).join('');
+      const rev = chars.split('').reverse().join('');
+      // Buscar coincidencia exacta contra posiciones guardadas para evitar falsos positivos
+      const match = placedMeta.find(pm => (
+        pm.word === chars && arraysEqual(pm.positions, currentCells)
+      ) || (
+        pm.word === rev && arraysEqual(pm.positions.slice().reverse(), currentCells)
+      ));
+      if(match && !foundSet.has(match.word)){
+        markFound(match.word, currentCells);
+      }
+      clearPreview();
+    }
+
+    function arraysEqual(a,b){
+      if(a.length !== b.length) return false;
+      for(let i=0;i<a.length;i++){
+        if(a[i][0] !== b[i][0] || a[i][1] !== b[i][1]) return false;
+      }
+      return true;
+    }
+
+    function onStart(evt){
+      const el = getCellFromEvent(evt);
+      if(!el) return;
+      isDragging = true;
+      startCell = el;
+      clearPreview();
+      evt.preventDefault && evt.preventDefault();
+    }
+
+    function onMove(evt){
+      if(!isDragging || !startCell) return;
+      const el = getCellFromEvent(evt);
+      if(!el) return;
+      const r0 = parseInt(startCell.dataset.row,10);
+      const c0 = parseInt(startCell.dataset.col,10);
+      const r1 = parseInt(el.dataset.row,10);
+      const c1 = parseInt(el.dataset.col,10);
+      const cells = computeLineCells(r0,c0,r1,c1);
+      if(cells.length){
+        setPreview(cells);
+      } else {
+        clearPreview();
+      }
+      if(evt.cancelable) evt.preventDefault();
+    }
+
+    function onEnd(){
+      if(!isDragging) return;
+      isDragging = false;
+      trySubmitSelection();
+      startCell = null;
+    }
+
+    gridEl.addEventListener('mousedown', onStart);
+    gridEl.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onEnd);
+
+    gridEl.addEventListener('touchstart', onStart, {passive:false});
+    gridEl.addEventListener('touchmove', onMove, {passive:false});
+    window.addEventListener('touchend', onEnd);
+  }
+
+  genBtn.removeEventListener('click', generate);
+  genBtn.addEventListener('click', generate);
+  // generar inicialmente
+  generate();
+}
+
+/* inicialización: nada más */
+</script>
+</body>
+</html>
